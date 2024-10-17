@@ -2,7 +2,7 @@
 
 An app that creates personal RSS feeds based on stuff people saved. Meant to be installed in the same docker
 as Lemmy and then available on the same domain through a reverse proxy. It needs to be set up like that because
-for the initialization it uses the Lemmy cookie with JWT.
+for the initialization it uses the Lemmy cookie with JWT (**the JWT is stored in a local db, treat the db like a password**).
 
 ## How does it work?
 
