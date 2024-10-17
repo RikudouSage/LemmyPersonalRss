@@ -217,6 +217,7 @@ func main() {
 			}
 			if post.Post.Body != nil && *post.Post.Body != "" {
 				item.Description = *post.Post.Body
+				item.Content = *post.Post.Body
 			}
 
 			feed.Items = append(feed.Items, item)
