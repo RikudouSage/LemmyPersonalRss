@@ -293,7 +293,14 @@ func main() {
 						Type:   contentType,
 					}
 				})()
-
+				if item.Enclosure == nil {
+					// we know there's a link and for whatever reason it's not a valid image
+					item.Content = fmt.Sprintf(
+						"<a href=\"%s\" target=\"_blank\">The post contains a link, click here to visit it.</a><hr>%s",
+						*post.Post.Url,
+						item.Content,
+					)
+				}
 			}
 
 			feed.Items = append(feed.Items, item)
