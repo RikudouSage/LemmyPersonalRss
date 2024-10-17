@@ -3,6 +3,7 @@ package helper
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"strings"
 )
 
 func RandomString(length int) (string, error) {
@@ -14,4 +15,9 @@ func RandomString(length int) (string, error) {
 	}
 
 	return hex.EncodeToString(bytes), nil
+}
+
+func ExtractExtension(filename string) string {
+	parts := strings.Split(filename, ".")
+	return parts[len(parts)-1]
 }

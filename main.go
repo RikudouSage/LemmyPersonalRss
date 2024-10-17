@@ -5,6 +5,7 @@ import (
 	"LemmyPersonalRss/config"
 	"LemmyPersonalRss/database"
 	"LemmyPersonalRss/database/migration"
+	"LemmyPersonalRss/helper"
 	"LemmyPersonalRss/lemmy"
 	"LemmyPersonalRss/user"
 	"encoding/json"
@@ -14,6 +15,7 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 	"github.com/gorilla/feeds"
 	"github.com/microcosm-cc/bluemonday"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -232,6 +234,66 @@ func main() {
 					item.Description = sanitizedDescription[:400] + "..."
 				}
 				item.Content = rendered
+			}
+
+			imgExtensionMimeTypeMap := map[string]string{
+				".jpg":  "image/jpeg",
+				".jpeg": "image/jpeg",
+				".png":  "image/png",
+				".gif":  "image/gif",
+				".webp": "image/webp",
+				".svg":  "image/svg+xml",
+			}
+			if post.Post.Url != nil && *post.Post.Url != "" {
+				item.Enclosure = (func() *feeds.Enclosure {
+					if !helper.EndsWithAny(*post.Post.Url, helper.Keys(imgExtensionMimeTypeMap)) {
+						return nil
+					}
+
+					contentType := imgExtensionMimeTypeMap["."+helper.ExtractExtension(*post.Post.Url)]
+					cacheItem := cachePool.Get(fmt.Sprintf("%s.%s", "image_size", *post.Post.Url))
+					if cacheItem.Hit() {
+						return &feeds.Enclosure{
+							Url:    *post.Post.Url,
+							Length: cacheItem.Get().(string),
+							Type:   contentType,
+						}
+					}
+
+					httpClient := &http.Client{}
+					response, err := httpClient.Get(*post.Post.Url)
+					if err != nil {
+						fmt.Println(err)
+						return nil
+					}
+					defer response.Body.Close()
+
+					var length int64
+					if response.ContentLength > -1 {
+						length = response.ContentLength
+					} else {
+						body, err := io.ReadAll(response.Body)
+						if err != nil {
+							fmt.Println(err)
+							return nil
+						}
+						length = int64(len(body))
+					}
+
+					lengthString := strconv.FormatInt(length, 10)
+					cacheItem.Set(lengthString)
+					err = cachePool.Store(cacheItem)
+					if err != nil {
+						fmt.Println(err)
+					}
+
+					return &feeds.Enclosure{
+						Url:    *post.Post.Url,
+						Length: lengthString,
+						Type:   contentType,
+					}
+				})()
+
 			}
 
 			feed.Items = append(feed.Items, item)
