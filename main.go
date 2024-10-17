@@ -107,7 +107,18 @@ func main() {
 			return
 		}
 		go func() {
+			cacheItem := cachePool.Get(fmt.Sprintf("%s.%d", "user_refresh_blocker", appUser.Id))
+			if cacheItem.Hit() {
+				return
+			}
+
 			err := user.UpdateUserData(appUser, db)
+			if err != nil {
+				fmt.Println(err)
+			}
+			cacheItem.Set(true)
+			cacheItem.SetExpiresAfter(&config.GlobalConfiguration.CacheDuration)
+			err = cachePool.Store(cacheItem)
 			if err != nil {
 				fmt.Println(err)
 			}
