@@ -30,6 +30,7 @@ Configuration is done using env variables, whether you use docker or a static bi
 | `INSTANCE`           | The instance the app is running on. With no protocol and should be exactly the domain (or subdomain) Lemmy is running on.      | `N/A`            |
 | `DATABASE_PATH`      | The filesystem path to the SQLite database. If empty, in-memory database is used instead. Always fill this out for production. | `<empty string>` |
 | `PORT`               | The port the app listens on. For docker it might make more sense to use the default and instead rebind it to the OS.           | `8080`           |
+| `CACHE_DURATION`     | How long should each feed be cached for to not hit the api constantly, in seconds.                                             | `300`            |
 
 ## Docker compose
 

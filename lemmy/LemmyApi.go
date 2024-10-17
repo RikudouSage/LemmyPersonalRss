@@ -1,6 +1,7 @@
 package lemmy
 
 import (
+	"LemmyPersonalRss/cache"
 	"LemmyPersonalRss/config"
 	"LemmyPersonalRss/dto"
 	"encoding/json"
@@ -10,6 +11,7 @@ import (
 )
 
 type Api struct {
+	Cache cache.ItemPool
 }
 
 func (receiver *Api) UserByJwt(jwt string) *dto.LemmyPerson {
@@ -54,6 +56,19 @@ func (receiver *Api) GetSavedPosts(user *dto.AppUser, page int, perPage int) (re
 	}
 	result = make([]*dto.LemmyPostView, 0, perPage)
 
+	var cacheItem cache.Item
+
+	if receiver.Cache != nil {
+		key := fmt.Sprintf("%s.%d.%d.%d", "saved", user.Id, page, perPage)
+		cacheItem = receiver.Cache.Get(key)
+	} else {
+		cacheItem = &cache.DefaultItem{}
+	}
+
+	if cacheItem.Hit() {
+		return cacheItem.Get().([]*dto.LemmyPostView)
+	}
+
 	url := fmt.Sprintf(
 		"https://%s/api/v3/user?username=%s&sort=New&saved_only=true&page=%d&limit=%d",
 		config.GlobalConfiguration.Instance,
@@ -89,6 +104,16 @@ func (receiver *Api) GetSavedPosts(user *dto.AppUser, page int, perPage int) (re
 
 	for _, post := range personResponse.Posts {
 		result = append(result, &post)
+	}
+
+	cacheItem.Set(result)
+	cacheItem.SetExpiresAfter(&config.GlobalConfiguration.CacheDuration)
+
+	if receiver.Cache != nil {
+		err = receiver.Cache.Store(cacheItem)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 	return

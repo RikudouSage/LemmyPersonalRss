@@ -1,6 +1,7 @@
 package main
 
 import (
+	"LemmyPersonalRss/cache"
 	"LemmyPersonalRss/config"
 	"LemmyPersonalRss/database"
 	"LemmyPersonalRss/database/migration"
@@ -24,6 +25,8 @@ func main() {
 
 	var err error
 	var db database.Database
+	var cachePool cache.ItemPool = &cache.InMemoryCacheItemPool{}
+
 	if config.GlobalConfiguration.DatabasePath == nil {
 		db = &database.InMemoryDatabase{}
 	} else {
@@ -35,7 +38,9 @@ func main() {
 
 	const feedPath string = "rss/{hash}"
 	feedUrl := "https://" + config.GlobalConfiguration.Instance + "/" + feedPath
-	api := &lemmy.Api{}
+	api := &lemmy.Api{
+		Cache: cachePool,
+	}
 
 	http.HandleFunc("GET /rss/init", func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json")

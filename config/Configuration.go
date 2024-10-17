@@ -3,12 +3,14 @@ package config
 import (
 	"strconv"
 	"syscall"
+	"time"
 )
 
 type Configuration struct {
-	Instance     string
-	Port         int
-	DatabasePath *string
+	Instance      string
+	Port          int
+	DatabasePath  *string
+	CacheDuration time.Duration
 }
 
 var GlobalConfiguration *Configuration
@@ -44,9 +46,16 @@ func init() {
 		dbPath = &dbPathRaw
 	}
 
+	cacheDurationStr := getEnvOrDefault("CACHE_DURATION", "300")
+	cacheDuration, err := strconv.Atoi(cacheDurationStr)
+	if err != nil {
+		panic(err)
+	}
+
 	GlobalConfiguration = &Configuration{
-		Instance:     getEnvOrPanic("INSTANCE"),
-		Port:         port,
-		DatabasePath: dbPath,
+		Instance:      getEnvOrPanic("INSTANCE"),
+		Port:          port,
+		DatabasePath:  dbPath,
+		CacheDuration: time.Duration(cacheDuration) * time.Second,
 	}
 }
