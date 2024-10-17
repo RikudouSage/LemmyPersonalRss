@@ -101,8 +101,12 @@ func main() {
 
 			return
 		}
-
-		lemmyUser := api.UserByJwt(appUser.Jwt)
+		go func() {
+			err := user.UpdateUserData(appUser, db)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}()
 
 		page := (func() int {
 			raw := request.URL.Query().Get("page")
@@ -153,9 +157,9 @@ func main() {
 			Created: now,
 			Image:   nil,
 		}
-		if lemmyUser.Avatar != nil && *lemmyUser.Avatar != "" {
+		if appUser.ImageUrl != nil {
 			feed.Image = &feeds.Image{
-				Url:   *lemmyUser.Avatar,
+				Url:   *appUser.ImageUrl,
 				Title: fmt.Sprintf("Lemmy - @%s@%s", appUser.Username, config.GlobalConfiguration.Instance),
 				Link:  fmt.Sprintf("https://%s/u/%s", config.GlobalConfiguration.Instance, appUser.Username),
 			}

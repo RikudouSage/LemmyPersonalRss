@@ -5,7 +5,7 @@ import (
 	"LemmyPersonalRss/dto"
 	"database/sql"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type SqliteDatabase struct {
@@ -13,7 +13,7 @@ type SqliteDatabase struct {
 }
 
 func NewSqliteDatabase(path string, migrationManager *migration.Manager) (*SqliteDatabase, error) {
-	db, err := sql.Open("sqlite3", path)
+	db, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, err
 	}
@@ -37,12 +37,11 @@ func (receiver *SqliteDatabase) FindByUserId(userId int) *dto.AppUser {
 	defer rows.Close()
 
 	if !rows.Next() {
-		fmt.Println("No user found")
 		return nil
 	}
 
 	user := &dto.AppUser{}
-	err = rows.Scan(&user.Id, &user.Hash, &user.Jwt, &user.Username)
+	err = rows.Scan(&user.Id, &user.Hash, &user.Jwt, &user.Username, &user.ImageUrl)
 	if err != nil {
 		fmt.Println(err)
 		return nil
@@ -55,11 +54,12 @@ func (receiver *SqliteDatabase) StoreUser(user *dto.AppUser) error {
 	receiver.validate()
 
 	_, err := receiver.db.Exec(
-		"INSERT INTO users (id, hash, jwt, username) VALUES (?, ?, ?, ?)",
+		"INSERT INTO users (id, hash, jwt, username, image_url) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET image_url = excluded.image_url",
 		user.Id,
 		user.Hash,
 		user.Jwt,
 		user.Username,
+		user.ImageUrl,
 	)
 
 	if err != nil {
@@ -84,7 +84,7 @@ func (receiver *SqliteDatabase) FindByHash(userHash string) *dto.AppUser {
 	}
 
 	user := &dto.AppUser{}
-	err = rows.Scan(&user.Id, &user.Hash, &user.Jwt, &user.Username)
+	err = rows.Scan(&user.Id, &user.Hash, &user.Jwt, &user.Username, &user.ImageUrl)
 	if err != nil {
 		fmt.Println(err)
 		return nil

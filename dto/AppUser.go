@@ -5,4 +5,5 @@ type AppUser struct {
 	Hash     string
 	Jwt      string
 	Username string
+	ImageUrl *string
 }

@@ -53,6 +53,17 @@ func GetCurrentFromHttpContext(request *http.Request, db database.Database) *dto
 	return user
 }
 
+func UpdateUserData(appUser *dto.AppUser, db database.Database) error {
+	lemmyUser := api.UserByJwt(appUser.Jwt)
+	appUser.ImageUrl = lemmyUser.Avatar
+	err := db.StoreUser(appUser)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return err
+}
+
 func CreateFromHttpContext(request *http.Request, db database.Database) *dto.AppUser {
 	lemmyUser := findLemmyUser(request)
 	if lemmyUser == nil {
@@ -80,8 +91,15 @@ func CreateFromHttpContext(request *http.Request, db database.Database) *dto.App
 		Jwt:      *findJwt(request),
 		Username: lemmyUser.Name,
 	}
+	if lemmyUser.Avatar != nil && *lemmyUser.Avatar != "" {
+		user.ImageUrl = lemmyUser.Avatar
+	}
 
-	db.StoreUser(user)
+	err = db.StoreUser(user)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
 
 	return user
 }

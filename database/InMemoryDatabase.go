@@ -5,7 +5,7 @@ import (
 )
 
 type InMemoryDatabase struct {
-	users []*dto.AppUser
+	users map[int]*dto.AppUser
 }
 
 func (receiver *InMemoryDatabase) FindByHash(userHash string) *dto.AppUser {
@@ -19,16 +19,18 @@ func (receiver *InMemoryDatabase) FindByHash(userHash string) *dto.AppUser {
 }
 
 func (receiver *InMemoryDatabase) StoreUser(user *dto.AppUser) error {
-	receiver.users = append(receiver.users, user)
+	if receiver.users == nil {
+		receiver.users = make(map[int]*dto.AppUser)
+	}
+	receiver.users[user.Id] = user
 	return nil
 }
 
 func (receiver *InMemoryDatabase) FindByUserId(userId int) *dto.AppUser {
-	for _, user := range receiver.users {
-		if user.Id == userId {
-			return user
-		}
+	user, ok := receiver.users[userId]
+	if !ok {
+		return nil
 	}
 
-	return nil
+	return user
 }
