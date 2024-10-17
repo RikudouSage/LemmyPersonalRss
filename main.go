@@ -94,16 +94,16 @@ func main() {
 		}
 	})
 	http.HandleFunc("GET /"+feedPath, func(writer http.ResponseWriter, request *http.Request) {
+		urlHash := request.PathValue("hash")
 		if config.GlobalConfiguration.Logging {
-			fmt.Println("GET /" + feedPath + " called")
+			fmt.Println(strings.Replace("GET /"+feedPath+" called", "{hash}", urlHash, -1))
 			defer func() {
-				fmt.Println("GET /" + feedPath + " finished")
+				fmt.Println(strings.Replace("GET /"+feedPath+" finished", "{hash}", urlHash, -1))
 			}()
 		}
 
 		writer.Header().Set("Content-Type", "application/json")
 
-		urlHash := request.PathValue("hash")
 		appUser := db.FindByHash(urlHash)
 
 		if appUser == nil {
@@ -217,6 +217,9 @@ func main() {
 			}
 			if post.Post.Body != nil && *post.Post.Body != "" {
 				item.Description = *post.Post.Body
+				if len(item.Description) > 400 {
+					item.Description = item.Description[:400] + "..."
+				}
 				item.Content = *post.Post.Body
 			}
 
