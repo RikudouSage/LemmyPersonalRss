@@ -9,7 +9,11 @@ import (
 	"LemmyPersonalRss/user"
 	"encoding/json"
 	"fmt"
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
 	"github.com/gorilla/feeds"
+	"github.com/microcosm-cc/bluemonday"
 	"net/http"
 	"os"
 	"os/signal"
@@ -216,11 +220,18 @@ func main() {
 				item.Updated = post.Post.Updated.Time
 			}
 			if post.Post.Body != nil && *post.Post.Body != "" {
-				item.Description = *post.Post.Body
+				markdownParser := parser.NewWithExtensions(parser.CommonExtensions)
+				document := markdownParser.Parse([]byte(*post.Post.Body))
+				htmlRenderer := html.NewRenderer(html.RendererOptions{Flags: html.CommonFlags})
+				rendered := string(markdown.Render(document, htmlRenderer))
+				descriptionPolicy := bluemonday.StripTagsPolicy()
+				sanitizedDescription := descriptionPolicy.Sanitize(rendered)
+
+				item.Description = sanitizedDescription
 				if len(item.Description) > 400 {
-					item.Description = item.Description[:400] + "..."
+					item.Description = sanitizedDescription[:400] + "..."
 				}
-				item.Content = *post.Post.Body
+				item.Content = rendered
 			}
 
 			feed.Items = append(feed.Items, item)
