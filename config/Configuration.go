@@ -11,6 +11,7 @@ type Configuration struct {
 	Port          int
 	DatabasePath  *string
 	CacheDuration time.Duration
+	Logging       bool
 }
 
 var GlobalConfiguration *Configuration
@@ -52,10 +53,17 @@ func init() {
 		panic(err)
 	}
 
+	loggingStr := getEnvOrDefault("LOGGING", "true")
+	logging, err := strconv.ParseBool(loggingStr)
+	if err != nil {
+		panic(err)
+	}
+
 	GlobalConfiguration = &Configuration{
 		Instance:      getEnvOrPanic("INSTANCE"),
 		Port:          port,
 		DatabasePath:  dbPath,
 		CacheDuration: time.Duration(cacheDuration) * time.Second,
+		Logging:       logging,
 	}
 }

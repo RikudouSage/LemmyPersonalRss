@@ -43,6 +43,13 @@ func main() {
 	}
 
 	http.HandleFunc("GET /rss/init", func(writer http.ResponseWriter, request *http.Request) {
+		if config.GlobalConfiguration.Logging {
+			fmt.Println("GET /rss/init called")
+			defer func() {
+				fmt.Println("GET /rss/init finished")
+			}()
+		}
+
 		writer.Header().Set("Content-Type", "application/json")
 
 		currentUser := user.GetCurrentFromHttpContext(request, db)
@@ -65,6 +72,9 @@ func main() {
 				fmt.Println(err)
 			}
 
+			if config.GlobalConfiguration.Logging {
+				fmt.Println("User is not logged in")
+			}
 			return
 		}
 
@@ -84,6 +94,13 @@ func main() {
 		}
 	})
 	http.HandleFunc("GET /"+feedPath, func(writer http.ResponseWriter, request *http.Request) {
+		if config.GlobalConfiguration.Logging {
+			fmt.Println("GET /" + feedPath + " called")
+			defer func() {
+				fmt.Println("GET /" + feedPath + " finished")
+			}()
+		}
+
 		writer.Header().Set("Content-Type", "application/json")
 
 		urlHash := request.PathValue("hash")
@@ -104,6 +121,9 @@ func main() {
 				fmt.Println(err)
 			}
 
+			if config.GlobalConfiguration.Logging {
+				fmt.Println("RSS feed not found")
+			}
 			return
 		}
 		go func() {
