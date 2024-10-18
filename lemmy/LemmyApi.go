@@ -137,3 +137,17 @@ func (receiver *Api) GetSavedPosts(user *dto.AppUser, page int, perPage int) (re
 
 	return
 }
+
+func (receiver *Api) GetSavedComments(user *dto.AppUser, page int, perPage int) (result []*dto.LemmyCommentView) {
+	result = make([]*dto.LemmyCommentView, 0, perPage)
+	personResponse := receiver.getSavedStuffResponse(user, page, perPage)
+	if personResponse == nil {
+		return
+	}
+
+	for _, comment := range personResponse.Comments {
+		result = append(result, &comment)
+	}
+
+	return
+}

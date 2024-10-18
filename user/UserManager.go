@@ -101,7 +101,7 @@ func CreateFromLemmyUser(lemmyUser *dto.LemmyPerson, db database.Database, jwt s
 		jwt,
 		lemmyUser.Name,
 		avatar,
-		&config.GlobalConfiguration.Instance,
+		instance,
 	)
 
 	err = db.StoreUser(user)

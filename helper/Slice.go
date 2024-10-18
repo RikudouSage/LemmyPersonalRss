@@ -20,6 +20,15 @@ func Keys[T1 comparable, T2 any](object map[T1]T2) []T1 {
 	return result
 }
 
+func Values[T1 comparable, T2 any](object map[T1]T2) []T2 {
+	result := make([]T2, 0, len(object))
+	for _, value := range object {
+		result = append(result, value)
+	}
+
+	return result
+}
+
 func EndsWithAny(value string, slice []string) bool {
 	for _, item := range slice {
 		if strings.HasSuffix(value, item) {

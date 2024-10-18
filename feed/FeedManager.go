@@ -13,26 +13,55 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"io"
 	"net/http"
+	urlPkg "net/url"
 	"strconv"
 	"time"
 )
 
-func CreateFeedFromPosts(posts []*dto.LemmyPostView, appUser *dto.AppUser, page int, cachePool cache.ItemPool) *feeds.Feed {
+func getHostFromUrl(url string) string {
+	parsed, err := urlPkg.Parse(url)
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
+
+	return parsed.Host
+}
+
+func markdownToHtml(content string) string {
+	markdownParser := parser.NewWithExtensions(parser.CommonExtensions)
+	document := markdownParser.Parse([]byte(content))
+	htmlRenderer := html.NewRenderer(html.RendererOptions{Flags: html.CommonFlags})
+	return string(markdown.Render(document, htmlRenderer))
+}
+
+func htmlToPlain(content string) string {
+	descriptionPolicy := bluemonday.StripTagsPolicy()
+	return descriptionPolicy.Sanitize(content)
+}
+
+func CreateFeedForUser(appUser *dto.AppUser, page int, cachePool cache.ItemPool) *feeds.Feed {
+	var instance string
+	if appUser.Instance != nil {
+		instance = *appUser.Instance
+	} else {
+		instance = config.GlobalConfiguration.Instance
+	}
 	now := time.Now()
 
 	feed := &feeds.Feed{
-		Title: fmt.Sprintf("Lemmy - @%s@%s saved list", appUser.Username, config.GlobalConfiguration.Instance),
+		Title: fmt.Sprintf("Lemmy - @%s@%s saved list", appUser.Username, instance),
 		Link: &feeds.Link{
 			Href: fmt.Sprintf(
 				"https://%s/u/%s?page=%d&sort=New&view=Saved",
-				config.GlobalConfiguration.Instance,
+				instance,
 				appUser.Username,
 				page,
 			),
 		},
-		Description: fmt.Sprintf("Personal RSS feed created from saved posts by @%s@%s", appUser.Username, config.GlobalConfiguration.Instance),
+		Description: fmt.Sprintf("Personal RSS feed created from saved posts by @%s@%s", appUser.Username, instance),
 		Author: &feeds.Author{
-			Name: fmt.Sprintf("@%s@%s", appUser.Username, config.GlobalConfiguration.Instance),
+			Name: fmt.Sprintf("@%s@%s", appUser.Username, instance),
 		},
 		Created: now,
 		Image:   nil,
@@ -41,18 +70,64 @@ func CreateFeedFromPosts(posts []*dto.LemmyPostView, appUser *dto.AppUser, page 
 	if appUser.ImageUrl != nil {
 		feed.Image = &feeds.Image{
 			Url:   *appUser.ImageUrl,
-			Title: fmt.Sprintf("Lemmy - @%s@%s", appUser.Username, config.GlobalConfiguration.Instance),
-			Link:  fmt.Sprintf("https://%s/u/%s", config.GlobalConfiguration.Instance, appUser.Username),
+			Title: fmt.Sprintf("Lemmy - @%s@%s", appUser.Username, instance),
+			Link:  fmt.Sprintf("https://%s/u/%s", instance, appUser.Username),
 		}
 	}
+
+	return feed
+}
+
+func AddCommentsToFeed(feed *feeds.Feed, comments []*dto.LemmyCommentView, appUser *dto.AppUser) {
+	var instance string
+	if appUser.Instance != nil {
+		instance = *appUser.Instance
+	} else {
+		instance = config.GlobalConfiguration.Instance
+	}
+
+	if instance == "" {
+		return
+	}
+
+	for _, comment := range comments {
+		item := &feeds.Item{
+			Title: "Comment on post \"" + comment.Post.Name + "\"",
+			Link: &feeds.Link{
+				Href: fmt.Sprintf("https://%s/comment/%s", instance, appUser.Username),
+			},
+			Author: &feeds.Author{
+				Name: fmt.Sprintf("@%s@%s", comment.Creator.Name, getHostFromUrl(comment.Creator.ActorId)),
+			},
+			Description: htmlToPlain(markdownToHtml(comment.Comment.Content)),
+			Created:     comment.Comment.Published.Time,
+			Content:     markdownToHtml(comment.Comment.Content),
+		}
+		item.Id = item.Link.Href
+		if len(item.Description) > 400 {
+			item.Description = item.Description[:400] + "..."
+		}
+
+		feed.Items = append(feed.Items, item)
+	}
+}
+
+func AddPostsToFeed(feed *feeds.Feed, posts []*dto.LemmyPostView, cachePool cache.ItemPool, appUser *dto.AppUser) {
+	var instance string
+	if appUser.Instance != nil {
+		instance = *appUser.Instance
+	} else {
+		instance = config.GlobalConfiguration.Instance
+	}
+
 	for _, post := range posts {
 		item := &feeds.Item{
 			Title: post.Post.Name,
 			Link: &feeds.Link{
-				Href: fmt.Sprintf("https://%s/post/%d", config.GlobalConfiguration.Instance, post.Post.Id),
+				Href: fmt.Sprintf("https://%s/post/%d", instance, post.Post.Id),
 			},
 			Author: &feeds.Author{
-				Name: fmt.Sprintf("@%s@%s", post.Creator.Name, config.GlobalConfiguration.Instance),
+				Name: fmt.Sprintf("@%s@%s", post.Creator.Name, getHostFromUrl(post.Creator.ActorId)),
 			},
 			Created: post.Post.Published.Time,
 		}
@@ -61,16 +136,12 @@ func CreateFeedFromPosts(posts []*dto.LemmyPostView, appUser *dto.AppUser, page 
 			item.Updated = post.Post.Updated.Time
 		}
 		if post.Post.Body != nil && *post.Post.Body != "" {
-			markdownParser := parser.NewWithExtensions(parser.CommonExtensions)
-			document := markdownParser.Parse([]byte(*post.Post.Body))
-			htmlRenderer := html.NewRenderer(html.RendererOptions{Flags: html.CommonFlags})
-			rendered := string(markdown.Render(document, htmlRenderer))
-			descriptionPolicy := bluemonday.StripTagsPolicy()
-			sanitizedDescription := descriptionPolicy.Sanitize(rendered)
+			rendered := markdownToHtml(*post.Post.Body)
+			sanitizedDescription := htmlToPlain(rendered)
 
 			item.Description = sanitizedDescription
 			if len(item.Description) > 400 {
-				item.Description = sanitizedDescription[:400] + "..."
+				item.Description = item.Description[:400] + "..."
 			}
 			item.Content = rendered
 		}
@@ -144,6 +215,4 @@ func CreateFeedFromPosts(posts []*dto.LemmyPostView, appUser *dto.AppUser, page 
 
 		feed.Items = append(feed.Items, item)
 	}
-
-	return feed
 }

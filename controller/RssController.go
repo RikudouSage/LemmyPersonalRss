@@ -11,7 +11,9 @@ import (
 	"LemmyPersonalRss/lemmy"
 	"LemmyPersonalRss/user"
 	"fmt"
+	"github.com/gorilla/feeds"
 	"net/http"
+	"slices"
 	"strings"
 )
 
@@ -24,6 +26,12 @@ func HandleRssFeed(
 	api *lemmy.Api,
 ) {
 	defer request.Body.Close()
+
+	includeRaw := request.URL.Query().Get("include")
+	if includeRaw == "" {
+		includeRaw = "posts"
+	}
+	include := strings.Split(includeRaw, ",")
 
 	urlHash := request.PathValue("hash")
 	if config.GlobalConfiguration.Logging {
@@ -66,9 +74,31 @@ func HandleRssFeed(
 	page := helper.GetQueryStringInt(request, "page", 1)
 	perPage := helper.GetQueryStringInt(request, "limit", 20)
 
-	saved := api.GetSavedPosts(appUser, page, perPage)
+	rssFeed := feed.CreateFeedForUser(appUser, page, cachePool)
 
-	rssFeed := feed.CreateFeedFromPosts(saved, appUser, page, cachePool)
+	if slices.Contains(include, "posts") {
+		savedPosts := api.GetSavedPosts(appUser, page, perPage)
+		feed.AddPostsToFeed(rssFeed, savedPosts, cachePool, appUser)
+	}
+	if slices.Contains(include, "comments") {
+		savedComments := api.GetSavedComments(appUser, page, perPage)
+		feed.AddCommentsToFeed(rssFeed, savedComments, appUser)
+	}
+
+	slices.SortFunc(rssFeed.Items, func(a, b *feeds.Item) int {
+		dateA := a.Created
+		dateB := b.Created
+
+		if dateA.Equal(dateB) {
+			return 0
+		}
+
+		if dateA.After(dateB) {
+			return -1
+		}
+
+		return 1
+	})
 
 	rss, err := rssFeed.ToRss()
 	if err != nil {

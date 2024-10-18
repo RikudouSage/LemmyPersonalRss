@@ -1,7 +1,28 @@
 package dto
 
 type LemmyPersonResponse struct {
-	Posts []LemmyPostView `json:"posts"`
+	Posts    []LemmyPostView    `json:"posts"`
+	Comments []LemmyCommentView `json:"comments"`
+}
+
+type LemmyCommentView struct {
+	Comment LemmyComment `json:"comment"`
+	Creator LemmyPerson  `json:"creator"`
+	Post    LemmyPost    `json:"post"`
+}
+
+type LemmyComment struct {
+	Id            int      `json:"id"`
+	CreatorId     int      `json:"creator_id"`
+	PostId        int      `json:"post_id"`
+	Content       string   `json:"content"`
+	Removed       bool     `json:"removed"`
+	Published     DateTime `json:"published"`
+	Deleted       bool     `json:"deleted"`
+	ActivityPubId int      `json:"ap_id"`
+	Local         bool     `json:"local"`
+	Path          string   `json:"path"`
+	Distinguished bool     `json:"distinguished"`
 }
 
 type LemmyPostView struct {
