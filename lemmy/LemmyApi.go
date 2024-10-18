@@ -51,26 +51,24 @@ func (receiver *Api) UserByJwt(jwt string, instance *string) *dto.LemmyPerson {
 	return &siteResponse.MyUser.LocalUserView.Person
 }
 
-func (receiver *Api) GetSavedPosts(user *dto.AppUser, page int, perPage int) (result []*dto.LemmyPostView) {
+func (receiver *Api) getSavedStuffResponse(user *dto.AppUser, page int, perPage int) (result *dto.LemmyPersonResponse) {
 	if page == 0 {
 		page = 1
 	}
 	if perPage == 0 {
 		perPage = 20
 	}
-	result = make([]*dto.LemmyPostView, 0, perPage)
 
 	var cacheItem cache.Item
-
 	if receiver.Cache != nil {
-		key := fmt.Sprintf("%s.%d.%d.%d", "saved", user.Id, page, perPage)
+		key := fmt.Sprintf("%s.%d.%d.%d", "saved_profile", user.Id, page, perPage)
 		cacheItem = receiver.Cache.Get(key)
 	} else {
 		cacheItem = &cache.DefaultItem{}
 	}
 
 	if cacheItem.Hit() {
-		return cacheItem.Get().([]*dto.LemmyPostView)
+		return cacheItem.Get().(*dto.LemmyPersonResponse)
 	}
 
 	var instance *string
@@ -113,11 +111,7 @@ func (receiver *Api) GetSavedPosts(user *dto.AppUser, page int, perPage int) (re
 		fmt.Println(err)
 	}
 
-	for _, post := range personResponse.Posts {
-		result = append(result, &post)
-	}
-
-	cacheItem.Set(result)
+	cacheItem.Set(&personResponse)
 	cacheItem.SetExpiresAfter(&config.GlobalConfiguration.CacheDuration)
 
 	if receiver.Cache != nil {
@@ -125,6 +119,20 @@ func (receiver *Api) GetSavedPosts(user *dto.AppUser, page int, perPage int) (re
 		if err != nil {
 			fmt.Println(err)
 		}
+	}
+
+	return &personResponse
+}
+
+func (receiver *Api) GetSavedPosts(user *dto.AppUser, page int, perPage int) (result []*dto.LemmyPostView) {
+	result = make([]*dto.LemmyPostView, 0, perPage)
+	personResponse := receiver.getSavedStuffResponse(user, page, perPage)
+	if personResponse == nil {
+		return
+	}
+
+	for _, post := range personResponse.Posts {
+		result = append(result, &post)
 	}
 
 	return
