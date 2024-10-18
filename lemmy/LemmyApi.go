@@ -14,9 +14,13 @@ type Api struct {
 	Cache cache.ItemPool
 }
 
-func (receiver *Api) UserByJwt(jwt string) *dto.LemmyPerson {
+func (receiver *Api) UserByJwt(jwt string, instance *string) *dto.LemmyPerson {
+	if instance == nil {
+		instance = &config.GlobalConfiguration.Instance
+	}
+
 	httpClient := &http.Client{}
-	request, err := http.NewRequest("GET", "https://"+config.GlobalConfiguration.Instance+"/api/v3/site", nil)
+	request, err := http.NewRequest("GET", "https://"+*instance+"/api/v3/site", nil)
 	if err != nil {
 		fmt.Println(err)
 		return nil
@@ -69,9 +73,16 @@ func (receiver *Api) GetSavedPosts(user *dto.AppUser, page int, perPage int) (re
 		return cacheItem.Get().([]*dto.LemmyPostView)
 	}
 
+	var instance *string
+	if user.Instance != nil {
+		instance = user.Instance
+	} else {
+		instance = &config.GlobalConfiguration.Instance
+	}
+
 	url := fmt.Sprintf(
 		"https://%s/api/v3/user?username=%s&sort=New&saved_only=true&page=%d&limit=%d",
-		config.GlobalConfiguration.Instance,
+		*instance,
 		user.Username,
 		page,
 		perPage,

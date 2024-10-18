@@ -41,7 +41,7 @@ func (receiver *SqliteDatabase) FindByUserId(userId int) *dto.AppUser {
 	}
 
 	user := &dto.AppUser{}
-	err = rows.Scan(&user.Id, &user.Hash, &user.Jwt, &user.Username, &user.ImageUrl)
+	err = rows.Scan(&user.Id, &user.Hash, &user.Jwt, &user.Username, &user.ImageUrl, &user.Instance)
 	if err != nil {
 		fmt.Println(err)
 		return nil
@@ -54,12 +54,13 @@ func (receiver *SqliteDatabase) StoreUser(user *dto.AppUser) error {
 	receiver.validate()
 
 	_, err := receiver.db.Exec(
-		"INSERT INTO users (id, hash, jwt, username, image_url) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET image_url = excluded.image_url",
+		"INSERT INTO users (id, hash, jwt, username, image_url, instance) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET image_url = excluded.image_url, instance = excluded.instance",
 		user.Id,
 		user.Hash,
 		user.Jwt,
 		user.Username,
 		user.ImageUrl,
+		user.Instance,
 	)
 
 	if err != nil {
@@ -84,7 +85,7 @@ func (receiver *SqliteDatabase) FindByHash(userHash string) *dto.AppUser {
 	}
 
 	user := &dto.AppUser{}
-	err = rows.Scan(&user.Id, &user.Hash, &user.Jwt, &user.Username, &user.ImageUrl)
+	err = rows.Scan(&user.Id, &user.Hash, &user.Jwt, &user.Username, &user.ImageUrl, &user.Instance)
 	if err != nil {
 		fmt.Println(err)
 		return nil

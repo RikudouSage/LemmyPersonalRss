@@ -1,6 +1,7 @@
 package user
 
 import (
+	"LemmyPersonalRss/config"
 	"LemmyPersonalRss/database"
 	"LemmyPersonalRss/dto"
 	"LemmyPersonalRss/helper"
@@ -35,7 +36,7 @@ func findLemmyUser(request *http.Request) *dto.LemmyPerson {
 		return nil
 	}
 
-	return api.UserByJwt(*jwt)
+	return api.UserByJwt(*jwt, nil)
 }
 
 func GetCurrentFromHttpContext(request *http.Request, db database.Database) *dto.AppUser {
@@ -54,8 +55,12 @@ func GetCurrentFromHttpContext(request *http.Request, db database.Database) *dto
 }
 
 func UpdateUserData(appUser *dto.AppUser, db database.Database) error {
-	lemmyUser := api.UserByJwt(appUser.Jwt)
+	lemmyUser := api.UserByJwt(appUser.Jwt, appUser.Instance)
 	appUser.ImageUrl = lemmyUser.Avatar
+	if appUser.Instance == nil {
+		appUser.Instance = &config.GlobalConfiguration.Instance
+	}
+
 	err := db.StoreUser(appUser)
 	if err != nil {
 		fmt.Println(err)
@@ -90,6 +95,8 @@ func CreateFromHttpContext(request *http.Request, db database.Database) *dto.App
 		Hash:     secureHash,
 		Jwt:      *findJwt(request),
 		Username: lemmyUser.Name,
+		ImageUrl: lemmyUser.Avatar,
+		Instance: &config.GlobalConfiguration.Instance,
 	}
 	if lemmyUser.Avatar != nil && *lemmyUser.Avatar != "" {
 		user.ImageUrl = lemmyUser.Avatar
