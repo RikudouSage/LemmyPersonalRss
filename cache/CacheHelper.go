@@ -1,12 +1,11 @@
-package helper
+package cache
 
 import (
-	"LemmyPersonalRss/cache"
 	"fmt"
 	"time"
 )
 
-func RunUnlessCached(cachePool cache.ItemPool, cacheKey string, duration *time.Duration, callable func()) {
+func RunUnlessCached(cachePool ItemPool, cacheKey string, duration *time.Duration, callable func()) {
 	cacheItem := cachePool.Get(cacheKey)
 	if cacheItem.Hit() {
 		return

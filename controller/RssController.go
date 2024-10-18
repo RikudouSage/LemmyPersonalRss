@@ -55,7 +55,7 @@ func HandleRssFeed(
 		return
 	}
 
-	go helper.RunUnlessCached(
+	go cache.RunUnlessCached(
 		cachePool,
 		fmt.Sprintf("%s.%d", "user_refresh_blocker", appUser.Id),
 		&config.GlobalConfiguration.CacheDuration,
