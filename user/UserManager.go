@@ -69,12 +69,7 @@ func UpdateUserData(appUser *dto.AppUser, db database.Database) error {
 	return err
 }
 
-func CreateFromHttpContext(request *http.Request, db database.Database) *dto.AppUser {
-	lemmyUser := findLemmyUser(request)
-	if lemmyUser == nil {
-		return nil
-	}
-
+func CreateFromLemmyUser(lemmyUser *dto.LemmyPerson, db database.Database, jwt string, instance *string) *dto.AppUser {
 	if lemmyUser.Banned {
 		fmt.Println("User is banned")
 		return nil
@@ -84,23 +79,30 @@ func CreateFromHttpContext(request *http.Request, db database.Database) *dto.App
 		return nil
 	}
 
+	if instance == nil {
+		fmt.Println("Instance is nil")
+		return nil
+	}
+
 	secureHash, err := helper.RandomString(32)
 	if err != nil {
 		fmt.Println(err)
 		return nil
 	}
 
-	user := &dto.AppUser{
-		Id:       lemmyUser.Id,
-		Hash:     secureHash,
-		Jwt:      *findJwt(request),
-		Username: lemmyUser.Name,
-		ImageUrl: lemmyUser.Avatar,
-		Instance: &config.GlobalConfiguration.Instance,
-	}
+	var avatar *string
 	if lemmyUser.Avatar != nil && *lemmyUser.Avatar != "" {
-		user.ImageUrl = lemmyUser.Avatar
+		avatar = lemmyUser.Avatar
 	}
+
+	user := dto.NewAppUser(
+		lemmyUser.Id,
+		secureHash,
+		jwt,
+		lemmyUser.Name,
+		avatar,
+		&config.GlobalConfiguration.Instance,
+	)
 
 	err = db.StoreUser(user)
 	if err != nil {
@@ -109,6 +111,22 @@ func CreateFromHttpContext(request *http.Request, db database.Database) *dto.App
 	}
 
 	return user
+}
+
+func CreateFromHttpContext(request *http.Request, db database.Database) *dto.AppUser {
+	lemmyUser := findLemmyUser(request)
+	if lemmyUser == nil {
+		return nil
+	}
+
+	var instance *string
+	if config.GlobalConfiguration.Instance == "" {
+		instance = &request.Host
+	} else {
+		instance = &config.GlobalConfiguration.Instance
+	}
+
+	return CreateFromLemmyUser(lemmyUser, db, *findJwt(request), instance)
 }
 
 func init() {

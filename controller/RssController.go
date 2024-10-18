@@ -22,6 +22,8 @@ func HandleRssFeed(
 	cachePool cache.ItemPool,
 	api *lemmy.Api,
 ) {
+	defer request.Body.Close()
+
 	urlHash := request.PathValue("hash")
 	if config.GlobalConfiguration.Logging {
 		fmt.Println(strings.Replace("GET /"+feedPath+" called", "{hash}", urlHash, -1))

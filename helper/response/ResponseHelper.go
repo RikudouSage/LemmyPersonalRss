@@ -26,6 +26,10 @@ func WriteOkResponse(content any, writer http.ResponseWriter) error {
 	return WriteResponse(content, http.StatusOK, writer)
 }
 
+func WriteBadRequestResponse(content any, writer http.ResponseWriter) error {
+	return WriteResponse(content, http.StatusBadRequest, writer)
+}
+
 func WriteNotFoundResponse(content any, writer http.ResponseWriter) error {
 	return WriteResponse(content, http.StatusNotFound, writer)
 }
