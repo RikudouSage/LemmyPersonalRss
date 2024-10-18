@@ -19,7 +19,7 @@ type LemmyComment struct {
 	Removed       bool     `json:"removed"`
 	Published     DateTime `json:"published"`
 	Deleted       bool     `json:"deleted"`
-	ActivityPubId int      `json:"ap_id"`
+	ActivityPubId string   `json:"ap_id"`
 	Local         bool     `json:"local"`
 	Path          string   `json:"path"`
 	Distinguished bool     `json:"distinguished"`
