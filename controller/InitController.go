@@ -115,6 +115,18 @@ func HandleRegister(writer http.ResponseWriter, request *http.Request, api *lemm
 		body.Instance = &instance
 	}
 
+	if config.GlobalConfiguration.SingleInstanceMode && *body.Instance != config.GlobalConfiguration.Instance {
+		err := response.WriteForbiddenResponse(
+			dto.NewErrorBody("You cannot register with your instance."),
+			writer,
+		)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		return
+	}
+
 	if body.Jwt == "" {
 		err := response.WriteBadRequestResponse(
 			dto.NewErrorBody("You must provide a JWT token."),

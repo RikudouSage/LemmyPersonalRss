@@ -7,11 +7,12 @@ import (
 )
 
 type Configuration struct {
-	Instance      string
-	Port          int
-	DatabasePath  *string
-	CacheDuration time.Duration
-	Logging       bool
+	Instance           string
+	Port               int
+	DatabasePath       *string
+	CacheDuration      time.Duration
+	Logging            bool
+	SingleInstanceMode bool
 }
 
 var GlobalConfiguration *Configuration
@@ -59,11 +60,30 @@ func init() {
 		panic(err)
 	}
 
+	instance := getEnvOrDefault("INSTANCE", "")
+
+	var singleInstanceModeDefault string
+	if instance == "" {
+		singleInstanceModeDefault = "false"
+	} else {
+		singleInstanceModeDefault = "true"
+	}
+	singleInstanceModeStr := getEnvOrDefault("SINGLE_INSTANCE_MODE", singleInstanceModeDefault)
+	singleInstanceMode, err := strconv.ParseBool(singleInstanceModeStr)
+	if err != nil {
+		panic(err)
+	}
+
+	if singleInstanceMode && instance == "" {
+		panic("When single instance mode is enabled, you must also specify the instance")
+	}
+
 	GlobalConfiguration = &Configuration{
-		Instance:      getEnvOrDefault("INSTANCE", ""),
-		Port:          port,
-		DatabasePath:  dbPath,
-		CacheDuration: time.Duration(cacheDuration) * time.Second,
-		Logging:       logging,
+		Instance:           instance,
+		Port:               port,
+		DatabasePath:       dbPath,
+		CacheDuration:      time.Duration(cacheDuration) * time.Second,
+		Logging:            logging,
+		SingleInstanceMode: singleInstanceMode,
 	}
 }

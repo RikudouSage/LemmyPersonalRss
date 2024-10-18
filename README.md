@@ -25,17 +25,18 @@ The `latest` version is always the latest stable, `dev` is latest unstable. You 
 
 Configuration is done using env variables, whether you use docker or a static binary is irrelevant.
 
-| Environment variable | Description                                                                                                                    | Default          |
-|----------------------|--------------------------------------------------------------------------------------------------------------------------------|------------------|
-| `INSTANCE`           | The instance the app is running on. With no protocol and should be exactly the domain (or subdomain) Lemmy is running on.      | `N/A`            |
-| `DATABASE_PATH`      | The filesystem path to the SQLite database. If empty, in-memory database is used instead. Always fill this out for production. | `<empty string>` |
-| `PORT`               | The port the app listens on. For docker it might make more sense to use the default and instead rebind it to the OS.           | `8080`           |
-| `CACHE_DURATION`     | How long should each feed be cached for to not hit the api constantly, in seconds.                                             | `300`            |
-| `LOGGING`            | Whether logging is enabled or disabled, should be a string saying `true` or `false`                                            | `true`           |
+| Environment variable   | Description                                                                                                                                                       | Default                                              |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------|
+| `INSTANCE`             | The instance the app is running on. With no protocol and should be exactly the domain (or subdomain) Lemmy is running on. Defaults to current http host if empty. | `<current http host>`                                |
+| `DATABASE_PATH`        | The filesystem path to the SQLite database. If empty, in-memory database is used instead. Always fill this out for production.                                    | `<empty string>`                                     |
+| `PORT`                 | The port the app listens on. For docker it might make more sense to use the default and instead rebind it to the OS.                                              | `8080`                                               |
+| `CACHE_DURATION`       | How long should each feed be cached for to not hit the api constantly, in seconds.                                                                                | `300`                                                |
+| `LOGGING`              | Whether logging is enabled or disabled, should be a string saying `true` or `false`. Note that errors are always logged, regardless of this setting.              | `true`                                               |
+| `SINGLE_INSTANCE_MODE` | Whether users from any instance can register, or only from your chosen one. Must be a string `true` or `false`.                                                   | `true` if `INSTANCE` is specified, `false` otherwise |
 
 ## Docker compose
 
-Here's an example of a production docker compose file that I use in production.
+Here's an example of a docker compose file that I use in production.
 
 ```yaml
 services:
