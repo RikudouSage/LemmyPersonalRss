@@ -30,9 +30,7 @@ func HandleInit(writer http.ResponseWriter, request *http.Request, feedUrl strin
 		}
 
 		err := response.WriteForbiddenResponse(
-			map[string]string{
-				"error": "Automatic init is not enabled",
-			},
+			dto.NewErrorBody("Automatic init is not enabled"),
 			writer,
 		)
 		if err != nil {
@@ -51,9 +49,7 @@ func HandleInit(writer http.ResponseWriter, request *http.Request, feedUrl strin
 			fmt.Println("User is not logged in")
 		}
 		err := response.WriteUnauthorizedResponse(
-			map[string]string{
-				"error": "Failed to get current user. Are you logged in?",
-			},
+			dto.NewErrorBody("Failed to get current user. Are you logged in?"),
 			writer,
 		)
 		if err != nil {
@@ -66,10 +62,7 @@ func HandleInit(writer http.ResponseWriter, request *http.Request, feedUrl strin
 	url := strings.Replace(feedUrl, "{hash}", currentUser.Hash, -1)
 
 	err := response.WriteOkResponse(
-		map[string]string{
-			"message": "Success! You can find your feed at " + url,
-			"url":     url,
-		},
+		dto.NewSuccessResponse(url),
 		writer,
 	)
 	if err != nil {
@@ -92,9 +85,7 @@ func HandleRegister(writer http.ResponseWriter, request *http.Request, api *lemm
 		fmt.Println(err)
 
 		err = response.WriteInternalErrorResponse(
-			map[string]string{
-				"error": "Failed to read body, please try again later.",
-			},
+			dto.NewErrorBody("Failed to read body, please try again later."),
 			writer,
 		)
 		if err != nil {
@@ -110,9 +101,7 @@ func HandleRegister(writer http.ResponseWriter, request *http.Request, api *lemm
 		fmt.Println(err)
 
 		err = response.WriteBadRequestResponse(
-			map[string]string{
-				"error": "Failed to parse body, make sure your request is correct.",
-			},
+			dto.NewErrorBody("Failed to parse body, make sure your request is correct."),
 			writer,
 		)
 		if err != nil {
@@ -128,9 +117,7 @@ func HandleRegister(writer http.ResponseWriter, request *http.Request, api *lemm
 
 	if body.Jwt == "" {
 		err := response.WriteBadRequestResponse(
-			map[string]string{
-				"error": "You must provide a JWT token.",
-			},
+			dto.NewErrorBody("You must provide a JWT token."),
 			writer,
 		)
 		if err != nil {
@@ -143,7 +130,7 @@ func HandleRegister(writer http.ResponseWriter, request *http.Request, api *lemm
 	lemmyUser := api.UserByJwt(body.Jwt, body.Instance)
 	if lemmyUser == nil {
 		err := response.WriteBadRequestResponse(
-			&dto.ErrorBody{Error: "The JWT token or instance is invalid."},
+			dto.NewErrorBody("The JWT token or instance is invalid."),
 			writer,
 		)
 		if err != nil {
@@ -162,10 +149,7 @@ func HandleRegister(writer http.ResponseWriter, request *http.Request, api *lemm
 	url = strings.Replace(feedUrl, "{instance}", *appUser.Instance, -1)
 
 	err = response.WriteOkResponse(
-		map[string]string{
-			"message": "Success! You can find your feed at " + url,
-			"url":     url,
-		},
+		dto.NewSuccessResponse(url),
 		writer,
 	)
 	if err != nil {

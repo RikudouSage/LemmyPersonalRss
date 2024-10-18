@@ -4,6 +4,7 @@ import (
 	"LemmyPersonalRss/cache"
 	"LemmyPersonalRss/config"
 	"LemmyPersonalRss/database"
+	"LemmyPersonalRss/dto"
 	"LemmyPersonalRss/feed"
 	"LemmyPersonalRss/helper"
 	"LemmyPersonalRss/helper/response"
@@ -40,9 +41,7 @@ func HandleRssFeed(
 		}
 
 		err := response.WriteNotFoundResponse(
-			map[string]string{
-				"error": "The RSS feed could not be found.",
-			},
+			dto.NewErrorBody("The RSS feed could not be found."),
 			writer,
 		)
 		if err != nil {
@@ -75,9 +74,7 @@ func HandleRssFeed(
 	if err != nil {
 		fmt.Println(err)
 		err := response.WriteInternalErrorResponse(
-			map[string]string{
-				"error": "The RSS feed could not be generated, please try again later.",
-			},
+			dto.NewErrorBody("The RSS feed could not be generated, please try again later."),
 			writer,
 		)
 		if err != nil {
