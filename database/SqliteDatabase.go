@@ -96,6 +96,6 @@ func (receiver *SqliteDatabase) FindByHash(userHash string) *dto.AppUser {
 
 func (receiver *SqliteDatabase) validate() {
 	if receiver.db == nil {
-		panic("Please use NewSqliteDatabase(path) to create an instance of SqliteDatabase")
+		panic("Please use NewSqliteDatabase() to create an instance of SqliteDatabase")
 	}
 }
