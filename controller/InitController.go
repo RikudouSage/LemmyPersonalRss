@@ -146,7 +146,7 @@ func HandleRegister(writer http.ResponseWriter, request *http.Request, api *lemm
 	}
 
 	url := strings.Replace(feedUrl, "{hash}", appUser.Hash, -1)
-	url = strings.Replace(feedUrl, "{instance}", *appUser.Instance, -1)
+	url = strings.Replace(url, "{instance}", *appUser.Instance, -1)
 
 	err = response.WriteOkResponse(
 		dto.NewSuccessResponse(url),

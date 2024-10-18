@@ -42,11 +42,11 @@ func main() {
 		replacedUrl := strings.Replace(feedUrl, "{instance}", config.GlobalConfiguration.Instance, -1)
 		HandleInit(writer, request, replacedUrl, db)
 	})
+	http.HandleFunc("POST /rss/register", func(writer http.ResponseWriter, request *http.Request) {
+		HandleRegister(writer, request, api, db, feedUrl)
+	})
 	http.HandleFunc("GET /"+feedPath, func(writer http.ResponseWriter, request *http.Request) {
 		HandleRssFeed(writer, request, feedPath, db, cachePool, api)
-	})
-	http.HandleFunc("POST /register", func(writer http.ResponseWriter, request *http.Request) {
-		HandleRegister(writer, request, api, db, feedUrl)
 	})
 
 	go func() {
