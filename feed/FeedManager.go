@@ -94,7 +94,7 @@ func AddCommentsToFeed(feed *feeds.Feed, comments []*dto.LemmyCommentView, appUs
 		item := &feeds.Item{
 			Title: "Comment on post \"" + comment.Post.Name + "\"",
 			Link: &feeds.Link{
-				Href: fmt.Sprintf("https://%s/comment/%s", instance, appUser.Username),
+				Href: fmt.Sprintf("https://%s/comment/%s", instance, comment.Comment.Id),
 			},
 			Author: &feeds.Author{
 				Name: fmt.Sprintf("@%s@%s", comment.Creator.Name, getHostFromUrl(comment.Creator.ActorId)),
