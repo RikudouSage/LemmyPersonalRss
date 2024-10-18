@@ -60,7 +60,7 @@ func init() {
 	}
 
 	GlobalConfiguration = &Configuration{
-		Instance:      getEnvOrPanic("INSTANCE"),
+		Instance:      getEnvOrDefault("INSTANCE", ""),
 		Port:          port,
 		DatabasePath:  dbPath,
 		CacheDuration: time.Duration(cacheDuration) * time.Second,

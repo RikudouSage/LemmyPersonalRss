@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 )
 
@@ -32,16 +33,17 @@ func main() {
 	}
 
 	const feedPath string = "rss/{hash}"
-	feedUrl := "https://" + config.GlobalConfiguration.Instance + "/" + feedPath
+	const feedUrl string = "https://{instance}/" + feedPath
 	api := &lemmy.Api{
 		Cache: cachePool,
 	}
 
 	http.HandleFunc("GET /rss/init", func(writer http.ResponseWriter, request *http.Request) {
-		HandleInit(writer, request, feedUrl, db)
+		replacedUrl := strings.Replace(feedUrl, "{instance}", config.GlobalConfiguration.Instance, -1)
+		HandleInit(writer, request, replacedUrl, db)
 	})
 	http.HandleFunc("GET /"+feedPath, func(writer http.ResponseWriter, request *http.Request) {
-		HandleRssFeed(writer, request, feedUrl, db, cachePool, api)
+		HandleRssFeed(writer, request, feedPath, db, cachePool, api)
 	})
 
 	go func() {
