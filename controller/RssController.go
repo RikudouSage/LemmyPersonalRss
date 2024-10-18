@@ -6,9 +6,9 @@ import (
 	"LemmyPersonalRss/database"
 	"LemmyPersonalRss/feed"
 	"LemmyPersonalRss/helper"
+	"LemmyPersonalRss/helper/response"
 	"LemmyPersonalRss/lemmy"
 	"LemmyPersonalRss/user"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -30,28 +30,23 @@ func HandleRssFeed(
 		}()
 	}
 
-	writer.Header().Set("Content-Type", "application/json")
-
 	appUser := db.FindByHash(urlHash)
 
 	if appUser == nil {
-		response := map[string]string{
-			"error": "The RSS feed could not be found.",
-		}
-		raw, err := json.Marshal(response)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		writer.WriteHeader(http.StatusNotFound)
-		_, err = writer.Write(raw)
-		if err != nil {
-			fmt.Println(err)
-		}
-
 		if config.GlobalConfiguration.Logging {
 			fmt.Println("RSS feed not found")
 		}
+
+		err := response.WriteNotFoundResponse(
+			map[string]string{
+				"error": "The RSS feed could not be found.",
+			},
+			writer,
+		)
+		if err != nil {
+			fmt.Println(err)
+		}
+
 		return
 	}
 
@@ -77,17 +72,12 @@ func HandleRssFeed(
 	rss, err := rssFeed.ToRss()
 	if err != nil {
 		fmt.Println(err)
-
-		response := map[string]string{
-			"error": "The RSS feed could not be generated, please try again later.",
-		}
-		raw, err := json.Marshal(response)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		writer.WriteHeader(http.StatusInternalServerError)
-		_, err = writer.Write(raw)
+		err := response.WriteInternalErrorResponse(
+			map[string]string{
+				"error": "The RSS feed could not be generated, please try again later.",
+			},
+			writer,
+		)
 		if err != nil {
 			fmt.Println(err)
 		}

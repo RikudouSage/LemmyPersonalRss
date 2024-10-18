@@ -3,8 +3,8 @@ package controller
 import (
 	"LemmyPersonalRss/config"
 	"LemmyPersonalRss/database"
+	"LemmyPersonalRss/helper/response"
 	"LemmyPersonalRss/user"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -18,7 +18,22 @@ func HandleInit(writer http.ResponseWriter, request *http.Request, feedUrl strin
 		}()
 	}
 
-	writer.Header().Set("Content-Type", "application/json")
+	if config.GlobalConfiguration.Instance == "" {
+		if config.GlobalConfiguration.Logging {
+			fmt.Println("Called init, but no instance is configured")
+		}
+
+		err := response.WriteForbiddenResponse(
+			map[string]string{
+				"error": "Automatic init is not enabled",
+			},
+			writer,
+		)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
+	}
 
 	currentUser := user.GetCurrentFromHttpContext(request, db)
 	if currentUser == nil {
@@ -26,37 +41,31 @@ func HandleInit(writer http.ResponseWriter, request *http.Request, feedUrl strin
 	}
 
 	if currentUser == nil {
-		response := map[string]string{
-			"error": "Failed to get current user. Are you logged in?",
-		}
-		raw, err := json.Marshal(response)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		writer.WriteHeader(http.StatusUnauthorized)
-		_, err = writer.Write(raw)
-		if err != nil {
-			fmt.Println(err)
-		}
-
 		if config.GlobalConfiguration.Logging {
 			fmt.Println("User is not logged in")
 		}
+		err := response.WriteUnauthorizedResponse(
+			map[string]string{
+				"error": "Failed to get current user. Are you logged in?",
+			},
+			writer,
+		)
+		if err != nil {
+			fmt.Println(err)
+		}
+
 		return
 	}
 
 	url := strings.Replace(feedUrl, "{hash}", currentUser.Hash, -1)
-	response := map[string]string{
-		"message": "Success! You can find your feed at " + url,
-		"url":     url,
-	}
 
-	raw, err := json.Marshal(response)
-	if err != nil {
-		fmt.Println(err)
-	}
-	_, err = writer.Write(raw)
+	err := response.WriteOkResponse(
+		map[string]string{
+			"message": "Success! You can find your feed at " + url,
+			"url":     url,
+		},
+		writer,
+	)
 	if err != nil {
 		fmt.Println(err)
 	}
