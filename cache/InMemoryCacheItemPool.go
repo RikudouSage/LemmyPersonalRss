@@ -1,6 +1,8 @@
 package cache
 
-import "time"
+import (
+	"time"
+)
 
 type internalItem struct {
 	value      any
@@ -9,6 +11,10 @@ type internalItem struct {
 
 type InMemoryCacheItemPool struct {
 	items map[string]*internalItem
+}
+
+func (receiver *InMemoryCacheItemPool) GetCleaner() Cleaner {
+	return &InMemoryCacheCleaner{cache: receiver}
 }
 
 func (receiver *InMemoryCacheItemPool) Get(key string) Item {

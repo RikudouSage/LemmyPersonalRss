@@ -15,4 +15,5 @@ type Item interface {
 type ItemPool interface {
 	Get(key string) Item
 	Store(item Item) error
+	GetCleaner() Cleaner
 }
