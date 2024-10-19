@@ -7,12 +7,13 @@ import (
 )
 
 type Configuration struct {
-	Instance           string
-	Port               int
-	DatabasePath       *string
-	CacheDuration      time.Duration
-	Logging            bool
-	SingleInstanceMode bool
+	Instance             string
+	Port                 int
+	DatabasePath         *string
+	CacheDuration        time.Duration
+	Logging              bool
+	SingleInstanceMode   bool
+	EnableConfigEndpoint bool
 }
 
 var GlobalConfiguration *Configuration
@@ -74,16 +75,23 @@ func init() {
 		panic(err)
 	}
 
+	enableConfigEndpointStr := getEnvOrDefault("ENABLE_CONFIG_ENDPOINT", "false")
+	enableConfigEndpoint, err := strconv.ParseBool(enableConfigEndpointStr)
+	if err != nil {
+		panic(err)
+	}
+
 	if singleInstanceMode && instance == "" {
 		panic("When single instance mode is enabled, you must also specify the instance")
 	}
 
 	GlobalConfiguration = &Configuration{
-		Instance:           instance,
-		Port:               port,
-		DatabasePath:       dbPath,
-		CacheDuration:      time.Duration(cacheDuration) * time.Second,
-		Logging:            logging,
-		SingleInstanceMode: singleInstanceMode,
+		Instance:             instance,
+		Port:                 port,
+		DatabasePath:         dbPath,
+		CacheDuration:        time.Duration(cacheDuration) * time.Second,
+		Logging:              logging,
+		SingleInstanceMode:   singleInstanceMode,
+		EnableConfigEndpoint: enableConfigEndpoint,
 	}
 }

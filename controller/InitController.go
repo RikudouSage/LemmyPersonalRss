@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-func HandleInit(writer http.ResponseWriter, request *http.Request, feedUrl string, db database.Database) {
+func HandleInitEndpoint(writer http.ResponseWriter, request *http.Request, feedUrl string, db database.Database) {
 	defer request.Body.Close()
 
 	if config.GlobalConfiguration.Logging {
@@ -70,7 +70,7 @@ func HandleInit(writer http.ResponseWriter, request *http.Request, feedUrl strin
 	}
 }
 
-func HandleRegister(writer http.ResponseWriter, request *http.Request, api *lemmy.Api, db database.Database, feedUrl string) {
+func HandleRegisterEndpoint(writer http.ResponseWriter, request *http.Request, api *lemmy.Api, db database.Database, feedUrl string) {
 	defer request.Body.Close()
 
 	var instance string

@@ -17,7 +17,7 @@ import (
 	"strings"
 )
 
-func HandleRssFeed(
+func HandleRssFeedEndpoint(
 	writer http.ResponseWriter,
 	request *http.Request,
 	feedPath string,
